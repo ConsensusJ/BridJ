@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.nativelibs4java</groupId>
+	<groupId>org.consensusj.bridj</groupId>
 	<artifactId>bridj</artifactId>
-	<name>BridJ (NativeLibs4Java C/C++ Interop Layer)</name>
+	<name>BridJ (NativeLibs4Java C/C++ Interop Layer, ConsensusJ fork)</name>
 	<url>http://code.google.com/p/bridj/</url>
 	<version>0.7.1-SNAPSHOT</version>
 	<packaging>bundle</packaging>
@@ -25,16 +25,44 @@
 	<properties>
 		<versionSpecificSubPackage>v0_7_0</versionSpecificSubPackage>
 		<maven.compiler.optimize>true</maven.compiler.optimize>
+		<bridj.version>0.7.0</bridj.version>
+		<maven-velocity-plugin.version>0.9</maven-velocity-plugin.version>
+		<jnaerator.version>0.12</jnaerator.version>
+
+		<jna.version></jna.version>
+		<rococoa.version></rococoa.version>
+		<scala.version>2.10.4</scala.version>
+
+		<shadedArtifactAttached>true</shadedArtifactAttached>
+		<shadedClassifierName>shaded</shadedClassifierName>
 	</properties>
+
+	<developers>
+		<developer>
+			<id>olivier.chafik</id>
+			<name>Olivier Chafik</name>
+			<email>olivier.chafik@gmail.com</email>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>New BSD License (GPL-compatible)</name>
+			<url>http://code.google.com/p/bridj/wiki/CreditsAndLicense</url>
+			<distribution>repo</distribution>
+			<comments></comments>
+		</license>
+	</licenses>
+
 	<scm>
 		<connection>scm:git:git@github.com:nativelibs4java/BridJ.git</connection>
 		<developerConnection>scm:git:git@github.com:nativelibs4java/BridJ.git</developerConnection>
 		<url>http://github.com/nativelibs4java/BridJ</url>
 	</scm>
 	<parent>
-		<groupId>com.nativelibs4java</groupId>
-		<artifactId>nativelibs4java-parent</artifactId>
-		<version>1.10-SNAPSHOT</version>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
 	</parent>
 	<dependencies>
 		<dependency>
@@ -92,21 +120,21 @@
 			<artifactId>native-maven-plugin</artifactId>
 			<version>1.0-alpha-7</version>
 			<executions>
-			  <execution>
+				<execution>
 				<goals>
-				  <goal>javah</goal>
+					<goal>javah</goal>
 				</goals>
-			  </execution>
+				</execution>
 			</executions>
 			<configuration>
 			<javahOutputDirectory>${basedir}/src/main/cpp/bridj</javahOutputDirectory>
-			  <javahClassNames>
+				<javahClassNames>
 				<javahClassName>org.bridj.JNI</javahClassName>
 				<javahClassName>org.bridj.BridJ</javahClassName>
 				<javahClassName>org.bridj.Pointer</javahClassName>
 				<javahClassName>org.bridj.Platform</javahClassName>
 				<javahClassName>org.bridj.objc.ObjCJNI</javahClassName>
-			  </javahClassNames>
+				</javahClassNames>
 			</configuration>
 		</plugin-->
 			<plugin>
@@ -157,21 +185,44 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.14</version>
 				<configuration>
 					<forkCount>1</forkCount>
 					<reuseForks>false</reuseForks>
-          <systemPropertyVariables>
-            <jna.nosys>true</jna.nosys>
-          </systemPropertyVariables>
+					<systemPropertyVariables>
+						<jna.nosys>true</jna.nosys>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>com.nativelibs4java</groupId>
 				<artifactId>maven-velocity-plugin</artifactId>
+				<version>${maven-velocity-plugin.version}</version>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<properties>
+						<version>${project.version}</version>
+						<project_version>${project.version}</project_version>
+						<project_name>${project.artifactId}</project_name>
+						<bridj_version>${bridj.version}</bridj_version>
+						<jnaerator_version>${jnaerator.version}</jnaerator_version>
+						<jna_version>${jna.version}</jna_version>
+						<rococoa_version>${rococoa.version}</rococoa_version>
+						<versionSpecificSubPackage>${versionSpecificSubPackage}</versionSpecificSubPackage>
+					</properties>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.1</version>
 				<configuration>
 					<relocations>
 						<relocation>
@@ -307,6 +358,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.8</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
@@ -363,19 +415,19 @@
 - If you're building a native library with the NDK:
     - Copy native-libs/ to your project's root directory.
     - Add the following to your jni/Android.mk file:
-    
+
         include $(CLEAR_VARS)
         LOCAL_MODULE := bridj
         LOCAL_SRC_FILES := ../native-libs/$(TARGET_ARCH_ABI)/libbridj.so
         include $(PREBUILT_SHARED_LIBRARY)
-        
+
 - If you're not building any native library with the NDK and just want to use BridJ to bind system libraries:
     - Copy the contents of native-libs/ to libs/.
 
 In any case, if your project is already opened in the ADT / Eclipse, close it and reopen it to make sure it picks up the correct BridJ sources and javadoc locations.
 
 BridJ is opensource software. Please refer to LICENSE.BridJ.txt to know under which conditions you may use it.
-                        </echo>
+								</echo>
 								<zip destfile="${project.build.directory}/${project.build.finalName}-android.zip">
 									<zipfileset dir="${project.build.directory}" includes="README.Android.txt" fullpath="README.BridJ.txt"/>
 									<zipfileset dir="." includes="LICENSE" fullpath="LICENSE.BridJ.txt"/>
@@ -413,39 +465,39 @@ BridJ is opensource software. Please refer to LICENSE.BridJ.txt to know under wh
 					</execution>
 				</executions>
 			</plugin>
-        <plugin>
-          <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
-          <artifactId>maven-java-formatter-plugin</artifactId>
-          <version>0.4</version>
-          <configuration>
-            <configFile>eclipse-formatter-config.xml</configFile>
-            <overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
-            <directories>
-              <directory>${project.build.sourceDirectory}</directory>
-              <directory>${project.build.testSourceDirectory}</directory>
-            </directories>
-          </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.eclipse.text</groupId>
-              <artifactId>org.eclipse.text</artifactId>
-              <version>3.5.101</version>
-            </dependency>
-            <dependency>
-              <groupId>org.eclipse.tycho</groupId>
-              <artifactId>org.eclipse.jdt.core</artifactId>
-              <version>3.10.0.v20140604-1726</version>
-            </dependency>
-          </dependencies>
-          <executions>
-            <execution>
-              <phase>format</phase>
-              <goals>
-                <goal>format</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+			<plugin>
+				<groupId>com.googlecode.maven-java-formatter-plugin</groupId>
+				<artifactId>maven-java-formatter-plugin</artifactId>
+				<version>0.4</version>
+				<configuration>
+					<configFile>eclipse-formatter-config.xml</configFile>
+					<overrideConfigCompilerVersion>true</overrideConfigCompilerVersion>
+					<directories>
+						<directory>${project.build.sourceDirectory}</directory>
+						<directory>${project.build.testSourceDirectory}</directory>
+					</directories>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.eclipse.text</groupId>
+						<artifactId>org.eclipse.text</artifactId>
+						<version>3.5.101</version>
+					</dependency>
+					<dependency>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>org.eclipse.jdt.core</artifactId>
+						<version>3.10.0.v20140604-1726</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<phase>format</phase>
+						<goals>
+							<goal>format</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 	<profiles>
